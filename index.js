@@ -1,6 +1,6 @@
 // server.js
 const express = require('express');
-const mongoose = require('mongoose');
+// const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
@@ -11,12 +11,12 @@ const PORT = process.env.PORT || 5000;
 app.use(bodyParser.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.log(err));
+// mongoose.connect(process.env.MONGO_URI)
+//     .then(() => console.log('MongoDB connected'))
+//     .catch(err => console.log(err));
 
 // Define routes
-app.use('/api', require('./routes/userRoutes'));
+// app.use('/api', require('./routes/userRoutes'));
 
 app.get('/', (req, res) => {
     res.send('Hello, world!');
