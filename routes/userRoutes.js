@@ -11,7 +11,7 @@ const User = require('../model/user')
 // @desc    Register a user
 // @access  Public
 //corrected
-router.post('/users', validateUserInput, async (req, res) => {
+router.post('/users',async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
