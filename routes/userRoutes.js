@@ -8,6 +8,7 @@ const User = require('../models/user');
 // @route   POST api/users
 // @desc    Register a user
 // @access  Public
+//corrected
 router.post('/users', validateUserInput, async (req, res) => {
     const { name, email, password } = req.body;
 
