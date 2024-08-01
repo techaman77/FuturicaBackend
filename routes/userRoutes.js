@@ -3,8 +3,8 @@ const express = require('express');
 const router = express.Router();
 
 const { validateUserInput } = require('../middleware/validationMiddleware');
-// const User = require('../models/User.js');
-const User = require('../models/user.js')
+
+const User = require('../models/user')
 
 
 // @route   POST api/users
