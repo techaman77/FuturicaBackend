@@ -3,7 +3,9 @@ const express = require('express');
 const router = express.Router();
 
 const { validateUserInput } = require('../middleware/validationMiddleware');
-const User = require('../models/user');
+// const User = require('../models/User.js');
+const User = require('../models/user.js')
+
 
 // @route   POST api/users
 // @desc    Register a user
@@ -18,6 +20,8 @@ router.post('/users', validateUserInput, async (req, res) => {
             email,
             password
         });
+  
+
 
         await user.save();
         res.status(201).json({ msg: 'User registered successfully' });
