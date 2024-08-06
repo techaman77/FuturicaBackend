@@ -2,6 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+const authRoutes = require('./routes/userRoutes')
 require('dotenv').config();
 
 const app = express();
@@ -16,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI)
     .catch(err => console.log(err));
 
 // Define routes
-app.use('/api', require('./routes/userRoutes'));
+app.use(authRoutes);
 
 app.get('/', (req, res) => {
     res.send('Hello, world!');
