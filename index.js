@@ -1,9 +1,9 @@
-// server.js
 const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const authRoutes = require('./routes/userRoutes')
-const formRoutes = require('./routes/formRoutes')
+const cors = require('cors');
+const authRoutes = require('./routes/userRoutes');
+const formRoutes = require('./routes/formRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(bodyParser.json());
+app.use(cors()); // Enable CORS for all routes
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
