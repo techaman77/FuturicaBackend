@@ -60,5 +60,5 @@ const login = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-router.post("/users", login);
+router.post("/add-user", login);
 module.exports = router;
