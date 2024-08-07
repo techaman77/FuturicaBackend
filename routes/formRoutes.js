@@ -9,7 +9,7 @@ router.post('/formData', async (req, res) => {
             employeeId, name, contactNumber, qualification, extraQualifications, 
             experience, roleResponsibilities, skills, 
             fatherName, motherName, dateOfBirth, 
-            maritalStatus, permanentAddress 
+            maritalStatus, permanentAddress     
         } = req.body;
 
         // Validating the required fields

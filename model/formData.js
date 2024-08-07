@@ -44,7 +44,7 @@ const formDataSchema = new Schema({
         required: true
     },
     dateOfBirth: {
-        type: Date,
+        type: String,
         required: true
     },
     maritalStatus: {
