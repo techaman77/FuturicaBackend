@@ -7,15 +7,15 @@ router.post('/formData', async (req, res) => {
     try {
         const { 
             employeeId, name, contactNumber, qualification, extraQualifications, 
-            experience, roleAndResponsibilities, skills, 
-            fathersName, mothersName, dateOfBirth, 
+            experience, roleResponsibilities, skills, 
+            fatherName, motherName, dateOfBirth, 
             maritalStatus, permanentAddress 
         } = req.body;
 
         // Validating the required fields
         if ( !employeeId || !name || !contactNumber || !qualification || !extraQualifications || 
-            !experience || !roleAndResponsibilities || !skills || 
-            !fathersName || !mothersName || !dateOfBirth || 
+            !experience || !roleResponsibilities || !skills || 
+            !fatherName || !motherName || !dateOfBirth || 
             !maritalStatus || !permanentAddress) {
             return res.status(400).json({ error: 'All fields are required.' });
         }

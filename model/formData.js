@@ -27,7 +27,7 @@ const formDataSchema = new Schema({
         type: String,
         required: true
     },
-    roleAndResponsibilities: {
+    roleResponsibilities: {
         type: String,
         required: true
     },
@@ -35,11 +35,11 @@ const formDataSchema = new Schema({
         type: String, // Array of strings for multiple skills
         required: true
     },
-    fathersName: {
+    fatherName: {
         type: String,
         required: true
     },
-    mothersName: {
+    motherName: {
         type: String,
         required: true
     },
