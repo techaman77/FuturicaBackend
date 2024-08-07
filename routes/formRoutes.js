@@ -6,14 +6,14 @@ const router = express.Router();
 router.post('/formData', async (req, res) => {
     try {
         const { 
-            name, contactNumber, qualification, extraQualifications, 
+            employeeId, name, contactNumber, qualification, extraQualifications, 
             experience, roleAndResponsibilities, skills, 
             fathersName, mothersName, dateOfBirth, 
             maritalStatus, permanentAddress 
         } = req.body;
 
         // Validating the required fields
-        if (!name || !contactNumber || !qualification || !extraQualifications || 
+        if ( !employeeId || !name || !contactNumber || !qualification || !extraQualifications || 
             !experience || !roleAndResponsibilities || !skills || 
             !fathersName || !mothersName || !dateOfBirth || 
             !maritalStatus || !permanentAddress) {
@@ -26,15 +26,18 @@ router.post('/formData', async (req, res) => {
             return res.status(400).json({ error: 'Invalid contact number.' });
         }
 
-        // Additional validation for maritalStatus (restrict to certain values)
-        // const validMaritalStatuses = ['Single', 'Married', 'Divorced', 'Widowed'];
-        // if (!validMaritalStatuses.includes(maritalStatus)) {
-        //     return res.status(400).json({ error: 'Invalid marital status.' });
-        // }
+        // Count documents with the same employeeId
+        const count = await formData.countDocuments({ employeeId });
 
+        // Create and save the new form data
         const newFormData = new formData(req.body);
         await newFormData.save();
-        res.status(201).json({ msg: 'Form Data Added Successfully', newFormData });
+
+        res.status(201).json({ 
+            msg: 'Form Data Added Successfully', 
+            newFormData,
+            count
+        });
     } catch (err) {
         res.status(400).json({ error: err.message });
     }

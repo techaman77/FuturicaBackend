@@ -3,6 +3,10 @@ const Schema = mongoose.Schema;
 
 // Define the schema for the user data
 const formDataSchema = new Schema({
+    employeeId : {
+        type: String,
+        required : true
+    },
     name: {
         type: String,
         required: true
