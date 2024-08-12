@@ -2,23 +2,25 @@ const express = require('express');
 const formData = require('../model/formData'); // Assuming this is your Mongoose model
 const router = express.Router();
 // const axios = require('axios');
-// const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVUmubEMoIvMNjwiEMhq0QAro96oFgNl4x4-WvAh_SDS1e1vQDPpp7snGtncebIz0kBQ/exec'; // Replace with your Web App URL
-//https://script.google.com/macros/s/AKfycbxz3rX_5cuB-y6S8EhA9C9ZEKLChKaZMFUWbUzJQeSu59JBKmzlvaPbjgSvd1fCJ0JkCQ/exec
+// const GOOGLE_SHEET_WEB_APP_URL = 'YOUR_GOOGLE_SHEET_WEB_APP_URL'; // Replace with your Web App URL
+
 // POST route to create a new form entry
 router.post('/formData', async (req, res) => {
     try {
         const { 
-            employeeId, name, contactNumber, qualification, extraQualifications, 
-            experience, roleResponsibilities, skills, 
+            employeeId, name, contactNumber, qualification, qualificationDetails, extraQualifications, 
+            extraQualificationsDetails, experience, roleResponsibilities, 
+            softSkills, technicalSkills, 
             fatherName, motherName, dateOfBirth, 
-            maritalStatus, permanentAddress     
+            maritalStatus, permanentAddress, profile, 
+            linkedIn, languages 
         } = req.body;
 
         // Validating the required fields
-        if ( !employeeId || !name || !contactNumber || !qualification || !extraQualifications || 
-            !experience || !roleResponsibilities || !skills || 
+        if ( !employeeId || !name || !contactNumber || !qualification || !qualificationDetails || !extraQualifications || !extraQualificationsDetails || 
+            !experience || !roleResponsibilities || !softSkills || !technicalSkills ||
             !fatherName || !motherName || !dateOfBirth || 
-            !maritalStatus || !permanentAddress) {
+            !maritalStatus || !permanentAddress || !profile || !linkedIn || !languages) {
             return res.status(400).json({ error: 'All fields are required.' });
         }
 
