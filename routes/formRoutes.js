@@ -1,7 +1,9 @@
 const express = require('express');
 const formData = require('../model/formData'); // Assuming this is your Mongoose model
 const router = express.Router();
-
+// const axios = require('axios');
+// const GOOGLE_SHEET_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxVUmubEMoIvMNjwiEMhq0QAro96oFgNl4x4-WvAh_SDS1e1vQDPpp7snGtncebIz0kBQ/exec'; // Replace with your Web App URL
+//https://script.google.com/macros/s/AKfycbxz3rX_5cuB-y6S8EhA9C9ZEKLChKaZMFUWbUzJQeSu59JBKmzlvaPbjgSvd1fCJ0JkCQ/exec
 // POST route to create a new form entry
 router.post('/formData', async (req, res) => {
     try {
@@ -32,6 +34,9 @@ router.post('/formData', async (req, res) => {
         // Create and save the new form data
         const newFormData = new formData(req.body);
         await newFormData.save();
+
+        // Send data to Google Sheets
+        // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);
 
         res.status(201).json({ 
             msg: 'Form Data Added Successfully', 
