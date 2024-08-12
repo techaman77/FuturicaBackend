@@ -30,12 +30,12 @@ router.post('/formData', async (req, res) => {
             return res.status(400).json({ error: 'Invalid contact number.' });
         }
 
-        // Count documents with the same employeeId
-        const count = await formData.countDocuments({ employeeId });
-
         // Create and save the new form data
         const newFormData = new formData(req.body);
         await newFormData.save();
+
+        // Count documents with the same employeeId after saving the new form data
+        const count = await formData.countDocuments({ employeeId });
 
         // Send data to Google Sheets
         // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);
