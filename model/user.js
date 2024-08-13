@@ -20,6 +20,10 @@ const UserSchema = new Schema({
     password: {
         type: String,
         required: true
+    },
+    loggedIn: { 
+        type: Boolean,
+         default: false
     }
 });
 

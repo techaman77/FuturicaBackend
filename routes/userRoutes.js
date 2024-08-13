@@ -10,6 +10,7 @@ require('dotenv').config(); // Load environment variables
 // @route   POST api/users/register
 // @desc    Register a user
 // @access  Public
+// routes/userRoutes.js
 const register = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -34,7 +35,8 @@ const register = async (req, res) => {
             userId: uuidv4(),
             name,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            loggedIn: false // Set default login state
         });
 
         await user.save();
@@ -46,9 +48,11 @@ const register = async (req, res) => {
     }
 };
 
+
 // @route   POST api/users/login
 // @desc    Login a user
 // @access  Public
+// routes/userRoutes.js
 const login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -62,6 +66,11 @@ const login = async (req, res) => {
         let user = await User.findOne({ email });
         if (!user) {
             return res.status(400).json({ msg: 'Cannot find email' });
+        }
+
+        // Check if the user is already logged in
+        if (user.loggedIn) {
+            return res.status(400).json({ msg: 'User already logged in on another device' });
         }
 
         // Compare password
@@ -81,9 +90,14 @@ const login = async (req, res) => {
             payload,
             process.env.JWT_SECRET,
             { expiresIn: '1h' }, // Token expiration time
-            (err, token) => {
+            async (err, token) => {
                 if (err) throw err;
-                res.status(200).json({ msg: "User Logged In Successfully",token, user });
+
+                // Set the user as logged in
+                user.loggedIn = true;
+                await user.save();
+
+                res.status(200).json({ msg: "User Logged In Successfully", token, user });
             }
         );
     } catch (err) {
@@ -91,7 +105,34 @@ const login = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+// routes/userRoutes.js
+const logout = async (req, res) => {
+    const { email } = req.body;
 
+    try {
+        // Check if the user exists
+        let user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ msg: 'Cannot find email' });
+        }
+
+        // Check if the user is logged in
+        if (!user.loggedIn) {
+            return res.status(400).json({ msg: 'User is not logged in' });
+        }
+
+        // Set the user as logged out
+        user.loggedIn = false;
+        await user.save();
+
+        res.status(200).json({ msg: "User Logged Out Successfully" });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
+router.post("/logout", logout);
 router.post("/register", register);
 router.post("/login", login);
 
