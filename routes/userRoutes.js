@@ -107,7 +107,7 @@ const login = async (req, res) => {
 };
 // routes/userRoutes.js
 const logout = async (req, res) => {
-    const { email } = req.body;
+    const { userId } = req.body;
 
     try {
         // Check if the user exists
