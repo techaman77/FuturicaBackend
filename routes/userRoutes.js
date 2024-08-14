@@ -111,7 +111,7 @@ const logout = async (req, res) => {
 
     try {
         // Check if the user exists
-        let user = await User.findOne({ email });
+        let user = await User.findOne({ userId });
         if (!user) {
             return res.status(400).json({ msg: 'Cannot find email' });
         }
