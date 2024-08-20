@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const authRoutes = require('./routes/userRoutes');
 const formRoutes = require('./routes/formRoutes');
+const emailRoute = require('./routes/emailRoute'); 
 require('dotenv').config();
 
 const app = express();
@@ -21,6 +22,7 @@ mongoose.connect(process.env.MONGO_URI)
 // Define routes
 app.use(authRoutes);
 app.use(formRoutes);
+app.use(emailRoute);
 
 app.get('/', (req, res) => {
     res.send('Hello, world!');
