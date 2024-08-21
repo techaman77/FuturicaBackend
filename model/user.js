@@ -24,6 +24,10 @@ const UserSchema = new Schema({
     loggedIn: { 
         type: Boolean,
          default: false
+    },
+    selfDeclaration : {
+        type : Boolean,
+        default : false
     }
 });
 

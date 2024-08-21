@@ -36,7 +36,8 @@ const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            loggedIn: false // Set default login state
+            loggedIn: false ,// Set default login state
+            selfDeclaration : false
         });
 
         await user.save();
