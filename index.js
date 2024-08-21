@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const authRoutes = require('./routes/userRoutes');
 const formRoutes = require('./routes/formRoutes');
-const emailRoute = require('./routes/emailRoute'); 
+const emailRoute = require('./routes/emailRoute');
 require('dotenv').config();
 
 const app = express();
@@ -27,6 +27,8 @@ app.use(emailRoute);
 app.get('/', (req, res) => {
     res.send('Hello, world!');
 });
+
+
 
 // Start the server
 app.listen(PORT, () => {

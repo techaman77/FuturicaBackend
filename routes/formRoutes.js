@@ -32,8 +32,12 @@ router.post('/formData', async (req, res) => {
         const newFormData = new formData(req.body);
         await newFormData.save();
 
+         // Fetch today's date and format it as (year-month-date)
+         const today = new Date();
+         const formattedDate = today.toISOString().split('T')[0]; // yyyy-mm-dd
+
         // Count documents with the same employeeId after saving the new form data
-        const count = await formData.countDocuments({ employeeId });
+        const count = await formData.countDocuments({ employeeId, formattedDate });
 
         // Send data to Google Sheets
         // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);

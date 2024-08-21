@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
-
+const today = new Date();
 // Define the schema for the user data
 const formDataSchema = new Schema({
     employeeId: {
@@ -96,6 +96,10 @@ const formDataSchema = new Schema({
     },
     formStatus : {
         type: String,
+    },
+    formattedDate: {
+        type: String,
+        default: today.toISOString().split('T')[0]
     }
 
 }, { timestamps: true });
