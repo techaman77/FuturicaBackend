@@ -36,8 +36,8 @@ const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            loggedIn: false ,// Set default login state
-            selfDeclaration : false
+            loggedIn: false,// Set default login state
+            selfDeclaration: false
         });
 
         await user.save();
@@ -58,6 +58,13 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
+        // Check if today is Sunday
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+
+        if (dayOfWeek === 0) {
+            return res.status(403).json({ message: 'Login is not allowed on Sundays.' });
+        }
         // Check for missing required fields
         if (!email || !password) {
             return res.status(400).json({ msg: 'Please enter all required fields' });
