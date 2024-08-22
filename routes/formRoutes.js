@@ -38,6 +38,7 @@ router.post('/formData', async (req, res) => {
 
         // Count documents with the same employeeId after saving the new form data
         const count = await formData.countDocuments({ employeeId, formattedDate });
+        const totalCount = await formData.countDocuments({ employeeId })
 
         // Send data to Google Sheets
         // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);
@@ -45,7 +46,8 @@ router.post('/formData', async (req, res) => {
         res.status(201).json({ 
             msg: 'Form Data Added Successfully', 
             newFormData,
-            count
+            count,
+            totalCount
         });
     } catch (err) {
         res.status(400).json({ error: err.message });
