@@ -140,8 +140,49 @@ const logout = async (req, res) => {
     }
 };
 
+// GET all users
+const users = async (req, res) => {
+    try {
+        const users = await User.find();
+        res.status(200).json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+// POST /api/searchUser
+const searchUser = async (req, res) => {
+    try {
+        const { userId, email } = req.body;
+
+        // Build the search query based on available fields
+        let searchQuery = {};
+        if (userId) searchQuery.userId = userId;
+        if (email) searchQuery.email = email;
+
+        if (Object.keys(searchQuery).length === 0) {
+            return res.status(400).json({ message: 'Please provide userId or email to search.' });
+        }
+
+        // Find the user based on the search query
+        const user = await User.findOne(searchQuery);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found.' });
+        }
+
+        // Respond with the user details
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Server error.' });
+    }
+};
+
+
 router.post("/logout", logout);
 router.post("/register", register);
 router.post("/login", login);
+router.get("/users", users);
+router.post("/searchUser", searchUser);
 
 module.exports = router;

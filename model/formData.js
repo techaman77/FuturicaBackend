@@ -94,9 +94,6 @@ const formDataSchema = new Schema({
         type: Number,
         default: 0
     },
-    formStatus : {
-        type: String,
-    },
     formattedDate: {
         type: String,
         default: today.toISOString().split('T')[0]

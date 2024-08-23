@@ -53,4 +53,45 @@ router.post('/formData', async (req, res) => {
     }
 });
 
+
+// POST route to search forms by employeeId, serialNumber, or formattedDate
+router.post('/search-forms', async (req, res) => {
+    try {
+        const { employeeId, serialNumber, formattedDate } = req.body;
+
+        // Build a dynamic query object based on the provided fields
+        const query = {};
+        if (employeeId) {
+            query.employeeId = employeeId;
+        }
+        if (serialNumber) {
+            query.serialNumber = serialNumber;
+        }
+        if (formattedDate) {
+            query.formattedDate = formattedDate;
+        }
+
+        // Check if at least one search parameter is provided
+        if (Object.keys(query).length === 0) {
+            return res.status(400).json({ error: 'At least one of employeeId, serialNumber, or formattedDate must be provided' });
+        }
+
+        // Search the database for matching entries
+        const forms = await formData.find(query);
+
+        // If no forms are found, return a 404 error
+        if (forms.length === 0) {
+            return res.status(404).json({ message: 'No forms found matching the provided criteria' });
+        }
+
+        // Send the found forms to the frontend
+        res.status(200).json(forms);
+
+    } catch (err) {
+        // Handle any errors that occur during the process
+        console.error('Error while searching for forms:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;
