@@ -100,6 +100,9 @@ const formDataSchema = new Schema({
     formattedDate: {
         type: String,
         default: today.toISOString().split('T')[0]
+    },
+    serialNumber : {
+        type : String,
     }
 
 }, { timestamps: true });
