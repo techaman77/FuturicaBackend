@@ -50,7 +50,7 @@ router.post('/send-email', upload.single('file'), async (req, res) => {
     // Define email options
     let mailOptions = {
       from: 'hussainfaizan1379@gmail.com', // Sender address
-      to: "faizanyawaransari@gmail.com", // Send the email to the address received in req.body
+      to: "hr@fucturicatechnologies.com", // Send the email to the address received in req.body
       subject: `Declaration details of ${username}`, // Subject line
       text: `Hello,
 
