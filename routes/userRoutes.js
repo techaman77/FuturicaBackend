@@ -48,6 +48,44 @@ const register = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+// @route   PUT api/users/updatePassword
+// @desc    Update a user's password
+// @access  Private
+const updatePassword = async (req, res) => {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    try {
+        // Check for missing required fields
+        if (!userId || !currentPassword || !newPassword) {
+            return res.status(400).json({ msg: 'Please enter all required fields' });
+        }
+
+        // Find the user by userId
+        let user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        // Compare current password with the stored hash
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Current password is incorrect' });
+        }
+
+        // Hash the new password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update the user's password
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ msg: 'Password updated successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
 
 
 // @route   POST api/users/login
@@ -184,5 +222,5 @@ router.post("/register", register);
 router.post("/login", login);
 router.get("/users", users);
 router.post("/searchUser", searchUser);
-
+router.put("/updatePassword", updatePassword);
 module.exports = router;
