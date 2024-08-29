@@ -43,7 +43,7 @@ router.post('/send-email', upload.single('file'), async (req, res) => {
       service: 'gmail', // Use the email service you prefer (e.g., 'gmail')
       auth: {
         user: 'hussainfaizan1379@gmail.com', // Your email address
-        pass: 'nrnsoguehdkdwejt' // Your email password (should be stored securely)
+        pass: 'cjit qnly ytex pfvj' // Your email password (should be stored securely)
       }
     });
 
