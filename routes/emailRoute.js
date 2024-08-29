@@ -42,14 +42,14 @@ router.post('/send-email', upload.single('file'), async (req, res) => {
     let transporter = nodemailer.createTransport({
       service: 'gmail', // Use the email service you prefer (e.g., 'gmail')
       auth: {
-        user: 'hussainfaizan1379@gmail.com', // Your email address
+        user: 'tecnotecindia@gmail.com', // Your email address
         pass: 'cjit qnly ytex pfvj' // Your email password (should be stored securely)
       }
     });
 
     // Define email options
     let mailOptions = {
-      from: 'hussainfaizan1379@gmail.com', // Sender address
+      from: 'tecnotecindia@gmail.com', // Sender address
       to: "hr@fucturicatechnologies.com", // Send the email to the address received in req.body
       subject: `Declaration details of ${username}`, // Subject line
       text: `Hello,
