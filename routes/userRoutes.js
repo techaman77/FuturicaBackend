@@ -1,4 +1,3 @@
-// routes/userRoutes.js
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs'); // For password hashing
@@ -10,7 +9,6 @@ require('dotenv').config(); // Load environment variables
 // @route   POST api/users/register
 // @desc    Register a user
 // @access  Public
-// routes/userRoutes.js
 const register = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -36,7 +34,7 @@ const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            loggedIn: false,// Set default login state
+            loggedIn: false, // Set default login state
             selfDeclaration: false
         });
 
@@ -48,6 +46,7 @@ const register = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
+
 // @route   PUT api/users/updatePassword
 // @desc    Update a user's password
 // @access  Private
@@ -87,22 +86,13 @@ const updatePassword = async (req, res) => {
     }
 };
 
-
 // @route   POST api/users/login
 // @desc    Login a user
 // @access  Public
-// routes/userRoutes.js
 const login = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Check if today is Sunday
-        const today = new Date();
-        const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
-
-        if (dayOfWeek === 0) {
-            return res.status(403).json({ message: 'Login is not allowed on Sundays.' });
-        }
         // Check for missing required fields
         if (!email || !password) {
             return res.status(400).json({ msg: 'Please enter all required fields' });
@@ -151,7 +141,10 @@ const login = async (req, res) => {
         res.status(500).send('Server error');
     }
 };
-// routes/userRoutes.js
+
+// @route   POST api/users/logout
+// @desc    Logout a user
+// @access  Private
 const logout = async (req, res) => {
     const { userId } = req.body;
 
@@ -178,7 +171,9 @@ const logout = async (req, res) => {
     }
 };
 
-// GET all users
+// @route   GET api/users
+// @desc    Get all users
+// @access  Private
 const users = async (req, res) => {
     try {
         const users = await User.find();
@@ -187,7 +182,10 @@ const users = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-// POST /api/searchUser
+
+// @route   POST api/users/searchUser
+// @desc    Search for a user by userId or email
+// @access  Private
 const searchUser = async (req, res) => {
     try {
         const { userId, email } = req.body;
@@ -216,6 +214,31 @@ const searchUser = async (req, res) => {
     }
 };
 
+// @route   DELETE api/users/deleteUser
+// @desc    Delete a user by userId
+// @access  Private
+const deleteUser = async (req, res) => {
+    const { userId } = req.body;
+
+    try {
+        // Check for missing userId
+        if (!userId) {
+            return res.status(400).json({ msg: 'userId is required' });
+        }
+
+        // Find and delete the user
+        const user = await User.findOneAndDelete({ userId });
+
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        res.status(200).json({ msg: 'User deleted successfully' });
+    } catch (err) {
+        console.error('Error deleting user:', err.message);
+        res.status(500).json({ msg: 'Server error' });
+    }
+};
 
 router.post("/logout", logout);
 router.post("/register", register);
@@ -223,4 +246,6 @@ router.post("/login", login);
 router.get("/users", users);
 router.post("/searchUser", searchUser);
 router.put("/updatePassword", updatePassword);
+router.delete("/deleteUser", deleteUser); // Add delete user route
+
 module.exports = router;
