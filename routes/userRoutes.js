@@ -105,9 +105,9 @@ const login = async (req, res) => {
         }
 
         // Check if the user is already logged in
-        if (user.loggedIn) {
-            return res.status(400).json({ msg: 'User already logged in on another device' });
-        }
+        // if (user.loggedIn) {
+        //     return res.status(400).json({ msg: 'User already logged in on another device' });
+        // }
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
