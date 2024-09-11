@@ -4,6 +4,9 @@ const bcrypt = require('bcryptjs'); // For password hashing
 const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
 const User = require('../model/user');
+const sendEmail = require('../utils/nodemailer');
+const { generateOtp, verifyOtp } = require('../utils/two-factor-auth');
+const authMiddleware = require('../middlewares/auth-middleware');
 require('dotenv').config(); // Load environment variables
 
 // @route   POST api/users/register
@@ -115,6 +118,24 @@ const login = async (req, res) => {
             return res.status(400).json({ msg: 'Wrong Password' });
         }
 
+        //To Do for all admins
+        if (user.name === "Avanish" || user.name === "Aman") {
+            const token = await generateOtp();
+
+            if (!token) {
+                return res.status(400).json({ message: 'Token not found!' });
+            }
+
+            const mailOptions = {
+                from: process.env.NODEMAILER_USERNAME,
+                to: process.env.SEND_TO_EMAIL,
+                subject: 'Your OTP for 2FA',
+                text: `Your OTP is: ${token}`,
+            };
+
+            await sendEmail(mailOptions);
+        }
+
         // Create and assign a token
         const payload = {
             user: {
@@ -133,7 +154,7 @@ const login = async (req, res) => {
                 user.loggedIn = true;
                 await user.save();
 
-                res.status(200).json({ msg: "User Logged In Successfully", token, user });
+                return res.status(200).json({ msg: "User Logged In Successfully", token, user });
             }
         );
     } catch (err) {
@@ -240,9 +261,29 @@ const deleteUser = async (req, res) => {
     }
 };
 
+const verifyOtpController = async (req, res) => {
+    const { otp } = req.body;
+    try {
+        if (!otp) {
+            return res.status(400).json({ msg: 'Please enter all required fields' });
+        }
+        const isVerified = await verifyOtp(otp);
+
+        if (!isVerified) {
+            return res.status(400).json({ msg: 'Invalid OTP!' });
+        }
+
+        return res.status(200).json({ message: 'Otp verified successfully!' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+}
+
 router.post("/logout", logout);
 router.post("/register", register);
 router.post("/login", login);
+router.post("/verify-otp", verifyOtpController);
 router.get("/users", users);
 router.post("/searchUser", searchUser);
 router.put("/updatePassword", updatePassword);
