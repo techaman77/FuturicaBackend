@@ -1,17 +1,10 @@
-const express = require('express');
-const router = express.Router();
 const bcrypt = require('bcryptjs'); // For password hashing
 const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
 const User = require('../model/user');
 const sendEmail = require('../utils/nodemailer');
 const { generateOtp, verifyOtp } = require('../utils/two-factor-auth');
-const authMiddleware = require('../middlewares/auth-middleware');
-require('dotenv').config(); // Load environment variables
 
-// @route   POST api/users/register
-// @desc    Register a user
-// @access  Public
 const register = async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -50,48 +43,6 @@ const register = async (req, res) => {
     }
 };
 
-// @route   PUT api/users/updatePassword
-// @desc    Update a user's password
-// @access  Private
-const updatePassword = async (req, res) => {
-    const { userId, currentPassword, newPassword } = req.body;
-
-    try {
-        // Check for missing required fields
-        if (!userId || !currentPassword || !newPassword) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
-        }
-
-        // Find the user by userId
-        let user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
-        }
-
-        // Compare current password with the stored hash
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ msg: 'Current password is incorrect' });
-        }
-
-        // Hash the new password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
-
-        // Update the user's password
-        user.password = hashedPassword;
-        await user.save();
-
-        res.status(200).json({ msg: 'Password updated successfully' });
-    } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
-    }
-};
-
-// @route   POST api/users/login
-// @desc    Login a user
-// @access  Public
 const login = async (req, res) => {
     const { email, password } = req.body;
 
@@ -108,9 +59,9 @@ const login = async (req, res) => {
         }
 
         // Check if the user is already logged in
-        // if (user.loggedIn) {
-        //     return res.status(400).json({ msg: 'User already logged in on another device' });
-        // }
+        if (user.loggedIn) {
+            return res.status(400).json({ msg: 'User already logged in on another device' });
+        }
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
@@ -163,39 +114,26 @@ const login = async (req, res) => {
     }
 };
 
-// @route   POST api/users/logout
-// @desc    Logout a user
-// @access  Private
-const logout = async (req, res) => {
-    const { userId } = req.body;
-
+const verificationOtp = async (req, res) => {
+    const { otp } = req.body;
     try {
-        // Check if the user exists
-        let user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(400).json({ msg: 'Cannot find email' });
+        if (!otp) {
+            return res.status(400).json({ msg: 'Please enter all required fields' });
+        }
+        const isVerified = await verifyOtp(otp);
+
+        if (!isVerified) {
+            return res.status(400).json({ msg: 'Invalid OTP!' });
         }
 
-        // Check if the user is logged in
-        if (!user.loggedIn) {
-            return res.status(400).json({ msg: 'User is not logged in' });
-        }
-
-        // Set the user as logged out
-        user.loggedIn = false;
-        await user.save();
-
-        res.status(200).json({ msg: "User Logged Out Successfully" });
+        return res.status(200).json({ message: 'Otp verified successfully!' });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
-};
+}
 
-// @route   GET api/users
-// @desc    Get all users
-// @access  Private
-const users = async (req, res) => {
+const getUsers = async (req, res) => {
     try {
         const users = await User.find();
         res.status(200).json(users);
@@ -204,9 +142,6 @@ const users = async (req, res) => {
     }
 };
 
-// @route   POST api/users/searchUser
-// @desc    Search for a user by userId or email
-// @access  Private
 const searchUser = async (req, res) => {
     try {
         const { userId, email } = req.body;
@@ -235,9 +170,42 @@ const searchUser = async (req, res) => {
     }
 };
 
-// @route   DELETE api/users/deleteUser
-// @desc    Delete a user by userId
-// @access  Private
+const updatePassword = async (req, res) => {
+    const { userId, currentPassword, newPassword } = req.body;
+
+    try {
+        // Check for missing required fields
+        if (!userId || !currentPassword || !newPassword) {
+            return res.status(400).json({ msg: 'Please enter all required fields' });
+        }
+
+        // Find the user by userId
+        let user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(404).json({ msg: 'User not found' });
+        }
+
+        // Compare current password with the stored hash
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ msg: 'Current password is incorrect' });
+        }
+
+        // Hash the new password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        // Update the user's password
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ msg: 'Password updated successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};
+
 const deleteUser = async (req, res) => {
     const { userId } = req.body;
 
@@ -261,32 +229,39 @@ const deleteUser = async (req, res) => {
     }
 };
 
-const verifyOtpController = async (req, res) => {
-    const { otp } = req.body;
+const logout = async (req, res) => {
+    const { userId } = req.body;
+
     try {
-        if (!otp) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
-        }
-        const isVerified = await verifyOtp(otp);
-
-        if (!isVerified) {
-            return res.status(400).json({ msg: 'Invalid OTP!' });
+        // Check if the user exists
+        let user = await User.findOne({ userId });
+        if (!user) {
+            return res.status(400).json({ msg: 'Cannot find email' });
         }
 
-        return res.status(200).json({ message: 'Otp verified successfully!' });
+        // Check if the user is logged in
+        if (!user.loggedIn) {
+            return res.status(400).json({ msg: 'User is not logged in' });
+        }
+
+        // Set the user as logged out
+        user.loggedIn = false;
+        await user.save();
+
+        res.status(200).json({ msg: "User Logged Out Successfully" });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
     }
-}
+};
 
-router.post("/logout", logout);
-router.post("/register", register);
-router.post("/login", login);
-router.post("/verify-otp", verifyOtpController);
-router.get("/users", users);
-router.post("/searchUser", searchUser);
-router.put("/updatePassword", updatePassword);
-router.delete("/deleteUser", deleteUser); // Add delete user route
-
-module.exports = router;
+module.exports = {
+    register,
+    login,
+    verificationOtp,
+    getUsers,
+    searchUser,
+    updatePassword,
+    deleteUser,
+    logout,
+};
