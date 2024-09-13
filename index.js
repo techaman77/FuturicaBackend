@@ -6,6 +6,7 @@ const cors = require('cors');
 const authRoute = require('./routes/auth.route');
 const formRoutes = require('./routes/formRoutes');
 const mailRoute = require('./routes/mail.route');
+const signupRoute = require('./routes/signuproutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,6 +24,7 @@ mongoose.connect(process.env.MONGO_URI)
 app.use(authRoute);
 app.use(formRoutes);
 app.use(mailRoute);
+app.use(signupRoute);
 
 app.get('/', (req, res) => {
     res.send('Hello, world!');

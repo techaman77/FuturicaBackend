@@ -1,0 +1,7 @@
+const registerUser = require('../controllers/signupcontrollers')
+const express = require('express');
+const router = express.Router();
+
+router.post("/register", registerUser);
+
+module.exports = router;
