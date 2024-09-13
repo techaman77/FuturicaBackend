@@ -35,6 +35,10 @@ router.post("/searchUser", authController.searchUser);
 
 router.put("/updatePassword", authController.updatePassword);
 
+router.post("/forgetPassword", authController.forgetPassword);
+
+router.post("/resetPassword", authController.resetPassword);
+
 // @route   DELETE api/users/deleteUser
 // @desc    Delete a user by userId
 // @access  Private

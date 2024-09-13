@@ -206,6 +206,61 @@ const updatePassword = async (req, res) => {
     }
 };
 
+const forgetPassword = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const user = await User.findOne({ email }); // Corrected method
+
+        if (!user) {
+            console.error('User not found!');
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const otp = await generateOtp();
+
+        let mailOptions = {
+            from: process.env.NODEMAILER_USERNAME,
+            to: email,
+            subject: 'Password Reset',
+            text: `Please enter the following OTP to reset your password: \n\n Your OTP is: ${otp}`,
+        };
+
+        await sendEmail(mailOptions);
+
+        return res.status(200).json({ message: 'Password reset email sent' });
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error', error: err });
+    }
+};
+
+const resetPassword = async (req, res) => {
+    const { email, otp, password } = req.body;
+
+    try {
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            console.error('User not found!');
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isVerified = await verifyOtp(otp);
+
+        if (!isVerified) {
+            console.error('Unauthorized access!');
+            return res.status(401).json({ message: 'Invalid OTP' });
+        }
+
+        user.password = password; // Ensure password is hashed before saving
+        await user.save();
+
+        return res.status(200).json({ message: 'Password reset successfully!' });
+    } catch (err) {
+        return res.status(500).json({ message: 'Internal server error', error: err });
+    }
+};
+
 const deleteUser = async (req, res) => {
     const { userId } = req.body;
 
@@ -262,6 +317,8 @@ module.exports = {
     getUsers,
     searchUser,
     updatePassword,
+    forgetPassword,
+    resetPassword,
     deleteUser,
     logout,
 };
