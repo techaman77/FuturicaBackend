@@ -252,7 +252,12 @@ const resetPassword = async (req, res) => {
             return res.status(401).json({ message: 'Invalid OTP' });
         }
 
-        user.password = password; // Ensure password is hashed before saving
+        // Hash password before saving
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        user.password = hashedPassword; // Ensure password is hashed before saving
+
         await user.save();
 
         return res.status(200).json({ message: 'Password reset successfully!' });
