@@ -1,9 +1,10 @@
-const bcrypt = require('bcryptjs'); // For password hashing
+// const bcrypt = require('bcryptjs'); // For password hashing
 const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
-const User = require('../model/user');
+const User = require('../models/user.model');
 const sendEmail = require('../utils/nodemailer');
 const { generateOtp, verifyOtp } = require('../utils/two-factor-auth');
+const { CustomError } = require('../utils/handler');
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -11,35 +12,36 @@ const register = async (req, res) => {
     try {
         // Check for missing required fields
         if (!name || !email || !password) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
+            throw new CustomError('Please enter all required fields', 400);
         }
 
         // Check if the email already exists
         let existingUser = await User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ msg: 'User with this email already exists' });
+            throw new CustomError('User with this email already exists', 403);
         }
 
-        // Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // // Hash password before saving
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create a new user with a unique userId
         let user = new User({
             userId: uuidv4(),
             name,
             email,
-            password: hashedPassword,
+            password,
             loggedIn: false, // Set default login state
             selfDeclaration: false
         });
 
         await user.save();
 
-        res.status(201).json({ msg: 'User registered successfully', user });
+        return res.status(201).json({ message: 'User registered successfully', user });
+
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('Error: Registering user!', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -49,24 +51,25 @@ const login = async (req, res) => {
     try {
         // Check for missing required fields
         if (!email || !password) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
+            throw new CustomError('Please enter all required fields', 400);
         }
 
         // Check if the user exists
         let user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ msg: 'Cannot find email' });
+            throw new CustomError('Cannot find email', 404);
         }
 
         // Check if the user is already logged in
         if (user.loggedIn) {
-            return res.status(400).json({ msg: 'User already logged in on another device' });
+            throw new CustomError('User already logged in on another device', 403);
         }
 
         // Compare password
-        const isMatch = await bcrypt.compare(password, user.password);
+        const isMatch = await user.checkPassword(password);
+
         if (!isMatch) {
-            return res.status(400).json({ msg: 'Wrong Password' });
+            throw new CustomError('Wrong Password', 403);
         }
 
         //To Do for all admins
@@ -74,7 +77,7 @@ const login = async (req, res) => {
             const token = await generateOtp();
 
             if (!token) {
-                return res.status(400).json({ message: 'Token not found!' });
+                throw new CustomError('Token not found!', 403);
             }
 
             const mailOptions = {
@@ -109,8 +112,8 @@ const login = async (req, res) => {
             }
         );
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('Error: Logging in user!', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -118,27 +121,28 @@ const verificationOtp = async (req, res) => {
     const { otp } = req.body;
     try {
         if (!otp) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
+            throw new CustomError('Please enter all required fields', 400);
         }
         const isVerified = await verifyOtp(otp);
 
         if (!isVerified) {
-            return res.status(400).json({ msg: 'Invalid OTP!' });
+            throw new CustomError('Invalid OTP!', 403);
         }
 
         return res.status(200).json({ message: 'Otp verified successfully!' });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('Error:Verifying user!', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 }
 
 const getUsers = async (req, res) => {
     try {
         const users = await User.find();
-        res.status(200).json(users);
+        return res.status(200).json(users);
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error('Error: Fetching user.', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -152,21 +156,21 @@ const searchUser = async (req, res) => {
         if (email) searchQuery.email = email;
 
         if (Object.keys(searchQuery).length === 0) {
-            return res.status(400).json({ message: 'Please provide userId or email to search.' });
+            throw new CustomError('Please provide userId or email to search.', 400);
         }
 
         // Find the user based on the search query
         const user = await User.findOne(searchQuery);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found.' });
+            throw new CustomError('User not found.', 404);
         }
 
         // Respond with the user details
         return res.status(200).json(user);
-    } catch (error) {
-        console.error(error);
-        return res.status(500).json({ message: 'Server error.' });
+    } catch (err) {
+        console.error('Error: Searching user.', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -176,33 +180,34 @@ const updatePassword = async (req, res) => {
     try {
         // Check for missing required fields
         if (!userId || !currentPassword || !newPassword) {
-            return res.status(400).json({ msg: 'Please enter all required fields' });
+            throw new CustomError('Please enter all required fields', 400);
         }
 
         // Find the user by userId
         let user = await User.findOne({ userId });
         if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
+            throw new CustomError('User not found', 404);
         }
 
         // Compare current password with the stored hash
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        const isMatch = await user.checkPassword(currentPassword);
+
         if (!isMatch) {
-            return res.status(400).json({ msg: 'Current password is incorrect' });
+            throw new CustomError('Current password is incorrect', 403);
         }
 
         // Hash the new password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         // Update the user's password
-        user.password = hashedPassword;
+        user.password = newPassword;
         await user.save();
 
-        res.status(200).json({ msg: 'Password updated successfully' });
+        return res.status(200).json({ msg: 'Password updated successfully' });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('Error: Updating password', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -213,8 +218,7 @@ const forgetPassword = async (req, res) => {
         const user = await User.findOne({ email }); // Corrected method
 
         if (!user) {
-            console.error('User not found!');
-            return res.status(404).json({ message: 'User not found' });
+            throw new CustomError('User not found!', 404);
         }
 
         const otp = await generateOtp();
@@ -230,7 +234,8 @@ const forgetPassword = async (req, res) => {
 
         return res.status(200).json({ message: 'Password reset email sent' });
     } catch (err) {
-        return res.status(500).json({ message: 'Internal server error', error: err });
+        console.error('Error:Forget Password', err.message);
+        return res.status(500).json({ error: 'Internal server error', err });
     }
 };
 
@@ -241,28 +246,27 @@ const resetPassword = async (req, res) => {
         const user = await User.findOne({ email });
 
         if (!user) {
-            console.error('User not found!');
-            return res.status(404).json({ message: 'User not found' });
+            throw new CustomError('User not found', 404);
         }
 
         const isVerified = await verifyOtp(otp);
 
         if (!isVerified) {
-            console.error('Unauthorized access!');
-            return res.status(401).json({ message: 'Invalid OTP' });
+            throw new CustomError('Invalid OTP', 403);
         }
 
         // Hash password before saving
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // const salt = await bcrypt.genSalt(10);
+        // const hashedPassword = await bcrypt.hash(password, salt);
 
-        user.password = hashedPassword; // Ensure password is hashed before saving
+        user.password = password; // Ensure password is hashed before saving
 
         await user.save();
 
         return res.status(200).json({ message: 'Password reset successfully!' });
     } catch (err) {
-        return res.status(500).json({ message: 'Internal server error', error: err });
+        console.error('Error:Resetting password!', err.message);
+        return res.status(500).json({ error: 'Internal server error', err });
     }
 };
 
@@ -272,20 +276,20 @@ const deleteUser = async (req, res) => {
     try {
         // Check for missing userId
         if (!userId) {
-            return res.status(400).json({ msg: 'userId is required' });
+            throw new CustomError('UserId is required', 400);
         }
 
         // Find and delete the user
         const user = await User.findOneAndDelete({ userId });
 
         if (!user) {
-            return res.status(404).json({ msg: 'User not found' });
+            throw new CustomError('User not found', 404);
         }
 
-        res.status(200).json({ msg: 'User deleted successfully' });
+        return res.status(200).json({ msg: 'User deleted successfully' });
     } catch (err) {
-        console.error('Error deleting user:', err.message);
-        res.status(500).json({ msg: 'Server error' });
+        console.error('Error:Deleting user', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 
@@ -296,22 +300,22 @@ const logout = async (req, res) => {
         // Check if the user exists
         let user = await User.findOne({ userId });
         if (!user) {
-            return res.status(400).json({ msg: 'Cannot find email' });
+            throw new CustomError('Cannot find email', 404);
         }
 
         // Check if the user is logged in
         if (!user.loggedIn) {
-            return res.status(400).json({ msg: 'User is not logged in' });
+            throw new CustomError('User is not logged in', 403);
         }
 
         // Set the user as logged out
         user.loggedIn = false;
         await user.save();
 
-        res.status(200).json({ msg: "User Logged Out Successfully" });
+        return res.status(200).json({ msg: "User Logged Out Successfully" });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        console.error('Error: Logging out user!', err.message);
+        return res.status(500).json({ error: 'Internal Server Error', err });
     }
 };
 

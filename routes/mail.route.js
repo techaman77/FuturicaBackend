@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const User = require('../model/user'); // Adjust the path to your User model
+const User = require('../models/user.model');
 const mailController = require('../controllers/mail.controller');
 
 const router = express.Router();

@@ -1,8 +1,6 @@
-const nodemailer = require('nodemailer');
-const multer = require('multer');
-const User = require('../model/user'); // Adjust the path to your User model
+const User = require('../models/user.model');
 const sendEmail = require('../utils/nodemailer');
-
+const { CustomError } = require('../utils/handler');
 
 // Set up multer for file uploads with memory storage
 // const storage = multer.memoryStorage();
@@ -11,13 +9,12 @@ const sendMail = async (req, res) => {
     const { username, email, number, address, userId } = req.body;
     const file = req.file; // The uploaded file
 
-    console.log('Received data:', { username, email, number, address });
-    console.log('Received file:', file ? file.originalname : 'No file uploaded');
+    // console.log('Received data:', { username, email, number, address });
+    // console.log('Received file:', file ? file.originalname : 'No file uploaded');
 
     // Validate the incoming data
     if (!username || !email || !number || !address) {
-        console.error('Error: Missing required fields');
-        return res.status(400).json({ message: 'Missing required fields' });
+        throw new CustomError('Missing required fields', 400);
     }
 
     // Find the user by email and update the selfDeclaration field
@@ -29,11 +26,10 @@ const sendMail = async (req, res) => {
         );
 
         if (!user) {
-            console.error('Error: User not found');
-            return res.status(404).json({ message: 'User not found' });
+            throw new CustomError('User not found', 404);
         }
 
-        console.log('User selfDeclaration updated:', user);
+        // console.log('User selfDeclaration updated:', user);
 
         // Define email options
         let mailOptions = {
@@ -62,11 +58,11 @@ const sendMail = async (req, res) => {
         let info = await sendEmail(mailOptions);
         console.log('Email sent successfully:', info);
 
-        res.status(200).json({ message: 'Email sent successfully and selfDeclaration updated!' });
+        return res.status(200).json({ message: 'Email sent successfully and selfDeclaration updated!' });
 
-    } catch (error) {
+    } catch (err) {
         console.error('Error sending email or updating user:', error);
-        res.status(500).json({ message: 'Error sending email or updating user', error });
+        return res.status(500).json({ error: 'Error sending email or updating user', err });
     }
 };
 
