@@ -48,7 +48,7 @@ const createForm = async (req, res) => {
         });
     } catch (err) {
         console.error('Error: Creating new form.', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -87,7 +87,7 @@ const searchForm = async (req, res) => {
     } catch (err) {
         // Handle any errors that occur during the process
         console.error('Error: Searching Form', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 

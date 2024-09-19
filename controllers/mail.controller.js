@@ -62,7 +62,7 @@ const sendMail = async (req, res) => {
 
     } catch (err) {
         console.error('Error sending email or updating user:', error);
-        return res.status(500).json({ error: 'Error sending email or updating user', err });
+        ApiError(err, res);
     }
 };
 

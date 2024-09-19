@@ -2,9 +2,10 @@
 const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
 const User = require('../models/user.model');
+const bcrypt = require('bcryptjs');
 const sendEmail = require('../utils/nodemailer');
 const { generateOtp, verifyOtp } = require('../utils/two-factor-auth');
-const { CustomError } = require('../utils/handler');
+const { CustomError, ApiError } = require('../utils/handler');
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -41,7 +42,7 @@ const register = async (req, res) => {
 
     } catch (err) {
         console.error('Error: Registering user!', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -60,16 +61,16 @@ const login = async (req, res) => {
             throw new CustomError('Cannot find email', 404);
         }
 
-        // Check if the user is already logged in
-        if (user.loggedIn) {
-            throw new CustomError('User already logged in on another device', 403);
-        }
-
         // Compare password
-        const isMatch = await user.checkPassword(password);
+        const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             throw new CustomError('Wrong Password', 403);
+        }
+
+        // Check if the user is already logged in
+        if (user.loggedIn) {
+            throw new CustomError('User already logged in on another device', 403);
         }
 
         //To Do for all admins
@@ -97,7 +98,7 @@ const login = async (req, res) => {
             }
         };
 
-        jwt.sign(
+        await jwt.sign(
             payload,
             process.env.JWT_SECRET,
             { expiresIn: '1h' }, // Token expiration time
@@ -113,7 +114,7 @@ const login = async (req, res) => {
         );
     } catch (err) {
         console.error('Error: Logging in user!', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -132,7 +133,7 @@ const verificationOtp = async (req, res) => {
         return res.status(200).json({ message: 'Otp verified successfully!' });
     } catch (err) {
         console.error('Error:Verifying user!', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 }
 
@@ -142,7 +143,7 @@ const getUsers = async (req, res) => {
         return res.status(200).json(users);
     } catch (err) {
         console.error('Error: Fetching user.', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -170,7 +171,7 @@ const searchUser = async (req, res) => {
         return res.status(200).json(user);
     } catch (err) {
         console.error('Error: Searching user.', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -190,7 +191,7 @@ const updatePassword = async (req, res) => {
         }
 
         // Compare current password with the stored hash
-        const isMatch = await user.checkPassword(currentPassword);
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
 
         if (!isMatch) {
             throw new CustomError('Current password is incorrect', 403);
@@ -207,7 +208,7 @@ const updatePassword = async (req, res) => {
         return res.status(200).json({ msg: 'Password updated successfully' });
     } catch (err) {
         console.error('Error: Updating password', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -235,7 +236,7 @@ const forgetPassword = async (req, res) => {
         return res.status(200).json({ message: 'Password reset email sent' });
     } catch (err) {
         console.error('Error:Forget Password', err.message);
-        return res.status(500).json({ error: 'Internal server error', err });
+        ApiError(err, res);
     }
 };
 
@@ -266,7 +267,7 @@ const resetPassword = async (req, res) => {
         return res.status(200).json({ message: 'Password reset successfully!' });
     } catch (err) {
         console.error('Error:Resetting password!', err.message);
-        return res.status(500).json({ error: 'Internal server error', err });
+        ApiError(err, res);
     }
 };
 
@@ -289,7 +290,7 @@ const deleteUser = async (req, res) => {
         return res.status(200).json({ msg: 'User deleted successfully' });
     } catch (err) {
         console.error('Error:Deleting user', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
@@ -315,7 +316,7 @@ const logout = async (req, res) => {
         return res.status(200).json({ msg: "User Logged Out Successfully" });
     } catch (err) {
         console.error('Error: Logging out user!', err.message);
-        return res.status(500).json({ error: 'Internal Server Error', err });
+        ApiError(err, res);
     }
 };
 
