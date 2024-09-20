@@ -1,5 +1,6 @@
 const formData = require('../models/form.model');
-const { CustomError } = require('../utils/handler');
+const User = require('../models/user.model');
+const { CustomError, ApiError } = require('../utils/handler');
 
 const createForm = async (req, res) => {
     try {
@@ -37,14 +38,22 @@ const createForm = async (req, res) => {
         // Count documents with the same employeeId after saving the new form data
         const count = await formData.countDocuments({ employeeId, formattedDate });
 
+        let user = await User.findOne({ userId: employeeId });
+
+        if (!user) {
+            throw new Error('User not found!', 404);
+        }
+
+        user.totalForms = count;
+        await user.save();
         // Send data to Google Sheets
         //deleted
         // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);
 
         return res.status(201).json({
             msg: 'Form Data Added Successfully',
+            count,
             newFormData,
-            count
         });
     } catch (err) {
         console.error('Error: Creating new form.', err.message);
@@ -82,7 +91,7 @@ const searchForm = async (req, res) => {
         }
 
         // Send the found forms to the frontend
-        return res.status(200).json({ forms });
+        return res.status(200).json({ count: forms.length, forms });
 
     } catch (err) {
         // Handle any errors that occur during the process

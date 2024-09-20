@@ -22,6 +22,14 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
+    totalForms: {
+        type: Number,
+        default: 0,
+    },
+    rejectedForms: {
+        type: Number,
+        default: 0,
+    },
     loggedIn: {
         type: Boolean,
         default: false
