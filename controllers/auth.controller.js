@@ -1,4 +1,3 @@
-// const bcrypt = require('bcryptjs'); // For password hashing
 const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
 const User = require('../models/user.model');
@@ -23,15 +22,15 @@ const register = async (req, res) => {
         }
 
         // // Hash password before saving
-        // const salt = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(password, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         // Create a new user with a unique userId
         let user = new User({
             userId: uuidv4(),
             name,
             email,
-            password,
+            password: hashedPassword,
             loggedIn: false, // Set default login state
             selfDeclaration: false
         });
@@ -198,11 +197,11 @@ const updatePassword = async (req, res) => {
         }
 
         // Hash the new password before saving
-        // const salt = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(newPassword, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
 
         // Update the user's password
-        user.password = newPassword;
+        user.password = hashedPassword;
         await user.save();
 
         return res.status(200).json({ msg: 'Password updated successfully' });
@@ -257,10 +256,10 @@ const resetPassword = async (req, res) => {
         }
 
         // Hash password before saving
-        // const salt = await bcrypt.genSalt(10);
-        // const hashedPassword = await bcrypt.hash(password, salt);
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
-        user.password = password; // Ensure password is hashed before saving
+        user.password = hashedPassword; // Ensure password is hashed before saving
 
         await user.save();
 

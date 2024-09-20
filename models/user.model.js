@@ -33,28 +33,33 @@ const UserSchema = new Schema({
 });
 
 //premethod
-UserSchema.pre("save", async function (next) {
-    //is Modified don't do anything and simply move to next step
-    if (!this.isModified()) {
-        //next step which is saving data in database
-        next();
-    }
-    try {
-        // console.log(this.password);
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(this.password, salt);
-        this.password = hashedPassword;
-    } catch (error) {
-        console.error(error);
-    }
-});
+// UserSchema.pre("save", async function (next) {
+//     //is Modified don't do anything and simply move to next step
+//     if (!this.isModified()) {
+//         //next step which is saving data in database
+//         next();
+//     }
+//     try {
+//         // console.log(this.password);
+//         const salt = await bcrypt.genSalt(10);
+//         const hashedPassword = await bcrypt.hash(this.password, salt);
+//         this.password = hashedPassword;
+//     } catch (error) {
+//         console.error(error);
+//     }
+// });
 
 UserSchema.methods.checkPassword = async function (password) {
     try {
-        return bcrypt.compare(password, this.password);
+        console.log("Stored hashed password:", this.password);
+        const isMatch = await bcrypt.compare(password, this.password);
+        console.log("Password match result:", isMatch);
+        return isMatch;
     } catch (error) {
-        console.error(error);
+        console.error("Error comparing password:", error);
+        throw error; // Ensure the error is properly propagated
     }
-}
+};
+
 
 module.exports = mongoose.model('User', UserSchema);
