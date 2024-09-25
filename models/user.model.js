@@ -37,7 +37,23 @@ const UserSchema = new Schema({
     selfDeclaration: {
         type: Boolean,
         default: false
-    }
+    },
+    role: {
+        type: String,
+        default: 'employee',
+    },
+    isOtpRequired: {
+        type: Boolean,
+        default: false,
+    },
+    lastLoginTime: {
+        type: Date,
+        default: null,
+    },
+    workingHours: {
+        type: Number,
+        default: 0,
+    },
 });
 
 //premethod

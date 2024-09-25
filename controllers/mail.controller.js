@@ -1,12 +1,12 @@
 const User = require('../models/user.model');
 const sendEmail = require('../utils/nodemailer');
-const { CustomError } = require('../utils/handler');
+const { CustomError, ApiError } = require('../utils/handler');
 
 // Set up multer for file uploads with memory storage
 // const storage = multer.memoryStorage();
 
 const sendMail = async (req, res) => {
-    const { username, email, number, address, userId } = req.body;
+    const { username, email, number, address } = req.body;
     const file = req.file; // The uploaded file
 
     // console.log('Received data:', { username, email, number, address });
@@ -20,7 +20,7 @@ const sendMail = async (req, res) => {
     // Find the user by email and update the selfDeclaration field
     try {
         const user = await User.findOneAndUpdate(
-            { userId: userId },
+            { email: email },
             { selfDeclaration: true },
             { new: true } // Return the updated document
         );
@@ -33,8 +33,8 @@ const sendMail = async (req, res) => {
 
         // Define email options
         let mailOptions = {
-            from: 'tecnotecindia@gmail.com', // Sender address
-            to: "hr@fucturicatechnologies.com", // Send the email to the address received in req.body
+            from: `${process.env.NODEMAILER_USERNAME}`, // Sender address
+            to: `${process.env.SEND_BLOB_EMAIL}`, // Send the email to the address received in req.body
             subject: `Declaration details of ${username}`, // Subject line
             text: `Hello,
   
@@ -61,7 +61,7 @@ const sendMail = async (req, res) => {
         return res.status(200).json({ message: 'Email sent successfully and selfDeclaration updated!' });
 
     } catch (err) {
-        console.error('Error sending email or updating user:', error);
+        console.error('Error sending email or updating user:', err.message);
         ApiError(err, res);
     }
 };

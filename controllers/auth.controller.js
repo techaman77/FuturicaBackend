@@ -1,10 +1,10 @@
-const jwt = require('jsonwebtoken'); // For JWT
 const { v4: uuidv4 } = require('uuid'); // For unique user IDs
 const User = require('../models/user.model');
 const bcrypt = require('bcryptjs');
 const sendEmail = require('../utils/nodemailer');
 const { generateOtp, verifyOtp } = require('../utils/two-factor-auth');
 const { CustomError, ApiError } = require('../utils/handler');
+const { generateToken } = require('../utils/jwtToken');
 
 const register = async (req, res) => {
     const { name, email, password } = req.body;
@@ -31,8 +31,14 @@ const register = async (req, res) => {
             name,
             email,
             password: hashedPassword,
-            loggedIn: false, // Set default login state
-            selfDeclaration: false
+            loggedIn: false,
+            selfDeclaration: false,
+            totalForms: 0,
+            rejectedForms: 0,
+            role: 'employee',
+            isOtpRequired: false,
+            lastLoginTime: null,
+            workingHours: 0,
         });
 
         await user.save();
@@ -56,6 +62,7 @@ const login = async (req, res) => {
 
         // Check if the user exists
         let user = await User.findOne({ email });
+
         if (!user) {
             throw new CustomError('Cannot find email', 404);
         }
@@ -73,21 +80,30 @@ const login = async (req, res) => {
         }
 
         //To Do for all admins
-        if (user.name === "Avanish" || user.name === "Aman") {
-            const token = await generateOtp();
+        // if (user.role === 'admin') {
+        //     user.isOtpRequired = true;
+        //     await user.save();
 
-            if (!token) {
-                throw new CustomError('Token not found!', 403);
+        //     throw new CustomError('Otp required for login. Please contact admin.', 403);
+        // }
+
+        if (user.isOtpRequired) {
+            const otp = await generateOtp();
+
+            if (!otp) {
+                throw new CustomError('Otp not found!', 403);
             }
 
             const mailOptions = {
                 from: process.env.NODEMAILER_USERNAME,
                 to: process.env.SEND_TO_EMAIL,
                 subject: 'Your OTP for 2FA',
-                text: `Your OTP is: ${token}`,
+                text: `Your OTP is: ${otp}`,
             };
 
             await sendEmail(mailOptions);
+
+            throw new CustomError('Otp required for login. Please contact admin.', 403);
         }
 
         // Create and assign a token
@@ -97,20 +113,17 @@ const login = async (req, res) => {
             }
         };
 
-        await jwt.sign(
-            payload,
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }, // Token expiration time
-            async (err, token) => {
-                if (err) throw err;
+        const token = await generateToken(payload, '1h');
 
-                // Set the user as logged in
-                user.loggedIn = true;
-                await user.save();
+        if (!token) {
+            throw new CustomError('Error generating token!', 400);
+        }
 
-                return res.status(200).json({ msg: "User Logged In Successfully", token, user });
-            }
-        );
+        user.loggedIn = true;
+        user.lastLoginTime = new Date();
+        await user.save();
+
+        return res.status(200).json({ message: "User Logged In Successfully", token, user });
     } catch (err) {
         console.error('Error: Logging in user!', err.message);
         ApiError(err, res);
@@ -118,18 +131,28 @@ const login = async (req, res) => {
 };
 
 const verificationOtp = async (req, res) => {
-    const { otp } = req.body;
+    const { email, otp } = req.body;
     try {
-        if (!otp) {
+        if (!otp || !email) {
             throw new CustomError('Please enter all required fields', 400);
         }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            throw new CustomError('User not found', 404);
+        }
+
         const isVerified = await verifyOtp(otp);
 
         if (!isVerified) {
             throw new CustomError('Invalid OTP!', 403);
         }
 
-        return res.status(200).json({ message: 'Otp verified successfully!' });
+        user.isOtpRequired = false;
+        await user.save();
+
+        return res.status(200).json({ message: 'Otp verified successfully!', user });
     } catch (err) {
         console.error('Error:Verifying user!', err.message);
         ApiError(err, res);
@@ -183,8 +206,13 @@ const updatePassword = async (req, res) => {
             throw new CustomError('Please enter all required fields', 400);
         }
 
+        // if (currentPassword === newPassword) {
+        //     throw new CustomError('Current password and new password cannot be same!', 400);
+        // }
+
         // Find the user by userId
         let user = await User.findOne({ userId });
+
         if (!user) {
             throw new CustomError('User not found', 404);
         }
@@ -204,7 +232,7 @@ const updatePassword = async (req, res) => {
         user.password = hashedPassword;
         await user.save();
 
-        return res.status(200).json({ msg: 'Password updated successfully' });
+        return res.status(200).json({ message: 'Password updated successfully' });
     } catch (err) {
         console.error('Error: Updating password', err.message);
         ApiError(err, res);
@@ -286,7 +314,7 @@ const deleteUser = async (req, res) => {
             throw new CustomError('User not found', 404);
         }
 
-        return res.status(200).json({ msg: 'User deleted successfully' });
+        return res.status(200).json({ message: 'User deleted successfully' });
     } catch (err) {
         console.error('Error:Deleting user', err.message);
         ApiError(err, res);
@@ -308,11 +336,30 @@ const logout = async (req, res) => {
             throw new CustomError('User is not logged in', 403);
         }
 
+        if (!user.lastLoginTime) {
+            throw new CustomError(`User doesn't logged in recently.`, 400);
+        }
+
+        const currentTime = new Date().getTime();
+        const lastLoggedIn = await user.lastLoginTime;
+
+        const duration = (currentTime - lastLoggedIn) / (1000 * 60 * 60);
+        user.workingHours += duration;
+
+        if (user.role !== 'admin') {
+            if (user.workingHours < 6) {
+                user.isOtpRequired = true;
+            } else {
+                user.isOtpRequired = false;
+            }
+        }
+
         // Set the user as logged out
         user.loggedIn = false;
+        user.lastLoginTime = null;
         await user.save();
 
-        return res.status(200).json({ msg: "User Logged Out Successfully" });
+        return res.status(200).json({ message: "User Logged Out Successfully" });
     } catch (err) {
         console.error('Error: Logging out user!', err.message);
         ApiError(err, res);

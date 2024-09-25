@@ -1,8 +1,8 @@
-const User = require("../models/user.model");
+const User = require('../models/user.model');
 const { CustomError, ApiError } = require("../utils/handler");
 const { verifyToken } = require("../utils/jwtToken");
 
-const authMiddleware = async (req, res, next) => {
+const formMiddleware = async (req, res, next) => {
     const token = req.headers.authorization;
     try {
 
@@ -24,13 +24,17 @@ const authMiddleware = async (req, res, next) => {
             throw new CustomError('User not found!', 404);
         }
 
+        if (user.role !== 'admin') {
+            throw new CustomError('Unauthorized access!', 403);
+        }
+
         req.user = user;
 
         next();
     } catch (err) {
-        console.error("Error: Fetching token in auth middleware!", err.message)
+        console.error("Error: Fetching token in form middleware!", err.message)
         ApiError(err, res);
     }
 };
 
-module.exports = authMiddleware;
+module.exports = formMiddleware;

@@ -27,16 +27,16 @@ const createForm = async (req, res) => {
             throw new CustomError('Invalid contact number.', 403);
         }
 
+        if (new Date().getDay() === 'Sunday') {
+            throw new CustomError('Terms and Conditions violation.', 400);
+        }
+
         // Create and save the new form data
         const newFormData = new formData(req.body);
         await newFormData.save();
 
-        // Fetch today's date and format it as (year-month-date)
-        const today = new Date();
-        const formattedDate = today.toISOString().split('T')[0]; // yyyy-mm-dd
-
         // Count documents with the same employeeId after saving the new form data
-        const count = await formData.countDocuments({ employeeId, formattedDate });
+        const count = await formData.countDocuments({ employeeId });
 
         let user = await User.findOne({ userId: employeeId });
 
@@ -51,7 +51,7 @@ const createForm = async (req, res) => {
         // await axios.post(GOOGLE_SHEET_WEB_APP_URL, req.body);
 
         return res.status(201).json({
-            msg: 'Form Data Added Successfully',
+            message: 'Form Data Added Successfully',
             count,
             newFormData,
         });
