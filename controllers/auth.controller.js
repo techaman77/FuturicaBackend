@@ -87,6 +87,8 @@ const login = async (req, res) => {
         //     throw new CustomError('Otp required for login. Please contact admin.', 403);
         // }
 
+        const isAllowedToLogin = await user.checkWorkingHours();
+
         if (user.isOtpRequired) {
             const otp = await generateOtp();
 
@@ -120,7 +122,12 @@ const login = async (req, res) => {
         }
 
         user.loggedIn = true;
-        user.lastLoginTime = new Date();
+        user.workLogs.push({
+            date: new Date(),
+            loginTime: new Date(),
+            logoutTime: null,
+            workingHours: 0,
+        });
         await user.save();
 
         return res.status(200).json({ message: "User Logged In Successfully", token, user });
@@ -336,27 +343,32 @@ const logout = async (req, res) => {
             throw new CustomError('User is not logged in', 403);
         }
 
-        if (!user.lastLoginTime) {
-            throw new CustomError(`User doesn't logged in recently.`, 400);
+        const lastLoggedOut = new Date();
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let lastRecord = await user.workLogs[user.workLogs.length - 1];
+        let lastSecondRecord = await user.workLogs[user.workLogs.length - 2];
+
+        const lastLoggedIn = lastRecord.loginTime;
+
+        const duration = (lastLoggedOut - lastLoggedIn) / (1000 * 60 * 60);
+
+        if (lastSecondRecord) {
+            lastRecord.workingHours += lastSecondRecord.workingHours;
         }
 
-        const currentTime = new Date().getTime();
-        const lastLoggedIn = await user.lastLoginTime;
-
-        const duration = (currentTime - lastLoggedIn) / (1000 * 60 * 60);
-        user.workingHours += duration;
-
-        if (user.role !== 'admin') {
-            if (user.workingHours < 6) {
-                user.isOtpRequired = true;
-            } else {
-                user.isOtpRequired = false;
-            }
+        if (lastRecord) {
+            lastRecord.workingHours += duration;
+            lastRecord.logoutTime = lastLoggedOut;
+        } else {
+            await user.workLogs.push({ date: today, loginTime: null, logoutTime: today, workingHours: duration });
         }
 
         // Set the user as logged out
         user.loggedIn = false;
-        user.lastLoginTime = null;
+
         await user.save();
 
         return res.status(200).json({ message: "User Logged Out Successfully" });

@@ -3,6 +3,26 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 const bcrypt = require('bcryptjs');
 
+const workingHoursSchema = new Schema({
+    date: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    loginTime: {
+        type: Date,
+        default: null,
+    },
+    logoutTime: {
+        type: Date,
+        default: null,
+    },
+    workingHours: {
+        type: Number,
+        default: 0,
+    },
+});
+
 const UserSchema = new Schema({
     userId: {
         type: String,
@@ -46,14 +66,7 @@ const UserSchema = new Schema({
         type: Boolean,
         default: false,
     },
-    lastLoginTime: {
-        type: Date,
-        default: null,
-    },
-    workingHours: {
-        type: Number,
-        default: 0,
-    },
+    workLogs: [workingHoursSchema],
 });
 
 //premethod
@@ -72,6 +85,29 @@ const UserSchema = new Schema({
 //         console.error(error);
 //     }
 // });
+
+UserSchema.methods.checkWorkingHours = async function () {
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0);
+
+    const yesterdaysRecord = await this.workLogs.find(record => {
+        const recordDate = new Date(record.date);
+        recordDate.setHours(0, 0, 0, 0);
+        return recordDate.getTime() === yesterday.getTime();
+    });
+
+    if (this.role !== 'admin') {
+        if (yesterdaysRecord && yesterdaysRecord.workingHours < 6) {
+            this.isOtpRequired = true;
+        } else {
+            this.isOtpRequired = false;
+        }
+    }
+
+    return this.isOtpRequired;
+}
 
 UserSchema.methods.checkPassword = async function (password) {
     try {
