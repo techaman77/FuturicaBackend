@@ -163,13 +163,20 @@ const verificationOtp = async (req, res) => {
             throw new CustomError('Invalid OTP!', 403);
         }
 
-        const today = new Date();
-        const dayBeforeYesterday = new Date(today);
-        dayBeforeYesterday.setDate(today.getDate() - 1);
-        dayBeforeYesterday.setHours(0, 0, 0, 0);
-
         user.isOtpRequired = false;
-        user.workLogs = [];
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+
+        const endOfYesterday = new Date(today);
+        endOfYesterday.setDate(today.getDate() - 1);
+        endOfYesterday.setHours(23, 59, 59, 999);
+
+        user.workLogs = user.workLogs?.filter(log => {
+            const logDate = new Date(log.date);
+            return logDate < yesterday || logDate > endOfYesterday;
+        });
         await user.save();
 
         return res.status(200).json({ message: 'Otp verified successfully!', user });
