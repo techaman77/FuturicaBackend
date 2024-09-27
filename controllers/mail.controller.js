@@ -19,10 +19,8 @@ const sendMail = async (req, res) => {
 
     // Find the user by email and update the selfDeclaration field
     try {
-        const user = await User.findOneAndUpdate(
-            { email: email },
-            { selfDeclaration: true },
-            { new: true } // Return the updated document
+        const user = await User.findOne(
+            { email: email }
         );
 
         if (!user) {
@@ -54,11 +52,14 @@ const sendMail = async (req, res) => {
             }] : [] // Attach the file if it exists
         };
 
+        user.selfDeclaration = true;
+        await user.save();
+
         // Send the email
         let info = await sendEmail(mailOptions);
         console.log('Email sent successfully:', info);
 
-        return res.status(200).json({ message: 'Email sent successfully and selfDeclaration updated!' });
+        return res.status(200).json({ message: 'Email sent successfully and selfDeclaration updated!', user });
 
     } catch (err) {
         console.error('Error sending email or updating user:', err.message);

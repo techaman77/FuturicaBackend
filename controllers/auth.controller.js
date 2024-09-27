@@ -121,13 +121,14 @@ const login = async (req, res) => {
             }
         };
 
-        const token = await generateToken(payload, '1h');
+        const token = await generateToken(payload, '24h');
 
         if (!token) {
             throw new CustomError('Error generating token!', 400);
         }
 
         user.loggedIn = true;
+        user.isOtpRequired = isAllowedToLogin;
         user.workLogs.push({
             date: new Date(),
             loginTime: new Date(),
