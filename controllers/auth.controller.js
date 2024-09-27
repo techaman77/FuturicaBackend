@@ -87,6 +87,12 @@ const login = async (req, res) => {
         //     throw new CustomError('Otp required for login. Please contact admin.', 403);
         // }
 
+        const today = new Date();
+
+        if (today.getDay() === 'Sunday') {
+            throw new CustomError(`You aren't allowed to work on Sundays. Enjoy!`, 500);
+        }
+
         const isAllowedToLogin = await user.checkWorkingHours();
 
         if (user.isOtpRequired) {
