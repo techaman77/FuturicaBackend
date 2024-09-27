@@ -92,7 +92,7 @@ UserSchema.methods.checkWorkingHours = async function () {
     yesterday.setDate(today.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
 
-    const yesterdaysRecord = await this.workLogs.find(record => {
+    const yesterdaysRecord = await this.workLogs?.find(record => {
         const recordDate = new Date(record.date);
         recordDate.setHours(0, 0, 0, 0);
         return recordDate.getTime() === yesterday.getTime();
