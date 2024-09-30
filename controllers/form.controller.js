@@ -1,6 +1,7 @@
 const formData = require('../models/form.model');
 const User = require('../models/user.model');
 const { CustomError, ApiError } = require('../utils/handler');
+const { checkGrammar } = require('../utils/languageTool');
 
 const createForm = async (req, res) => {
     try {
@@ -37,6 +38,18 @@ const createForm = async (req, res) => {
 
         // Count documents with the same employeeId after saving the new form data
         const count = await formData.countDocuments({ employeeId });
+
+        const text = Object.values(newFormData).join(' ');
+
+        const grammarResponse = await checkGrammar(text);
+
+        if (grammarResponse && grammarResponse.matches.length > 0) {
+            const errorsCount = grammarResponse.matches.length;
+
+            if (errorsCount > 3) {
+                user.rejectedForms += 1;
+            }
+        }
 
         let user = await User.findOne({ userId: employeeId });
 
