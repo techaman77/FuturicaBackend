@@ -16,7 +16,7 @@ cron.schedule('0 0 * * *', async () => {
                 },
                 $pull: {
                     workLogs: {
-                        date: { $lt: dayBeforeYesterday }
+                        date: { $lte: dayBeforeYesterday }
                     }
                 }
             }
