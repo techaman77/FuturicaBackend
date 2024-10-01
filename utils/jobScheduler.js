@@ -21,8 +21,8 @@ cron.schedule('0 0 * * *', async () => {
                 }
             }
         );
-        console.log('Successfully reset loggedIn and workingHours for all users at 2 AM');
+        console.log('Successfully reset loggedIn and workingHours for all users at 12 AM');
     } catch (err) {
-        console.error('Error in resetting loggedIn and workingHours:', err);
+        console.error('Error in resetting loggedIn and workingHours:', err.message);
     }
 });
