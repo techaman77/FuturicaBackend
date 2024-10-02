@@ -4,11 +4,9 @@ const User = require('../models/user.model');
 cron.schedule('0 0 * * *', async () => {
     try {
         const today = new Date();
-        const dayBeforeYesterday = new Date(today);
-        dayBeforeYesterday.setDate(today.getDate() - 2);
-        dayBeforeYesterday.setHours(0, 0, 0, 0);
+        const dayBeforeYesterday = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() - 2, 0, 0, 0));
 
-        const users = await User.updateMany(
+        const result = await User.updateMany(
             {},
             {
                 $set: {
@@ -21,7 +19,8 @@ cron.schedule('0 0 * * *', async () => {
                 }
             }
         );
-        console.log('Successfully reset loggedIn and workingHours for all users at 12 AM');
+
+        console.log(`Successfully reset loggedIn and removed old workLogs for ${result.modifiedCount} users at 12 AM`);
     } catch (err) {
         console.error('Error in resetting loggedIn and workingHours:', err.message);
     }
