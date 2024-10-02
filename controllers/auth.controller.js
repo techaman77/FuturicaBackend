@@ -368,17 +368,14 @@ const logout = async (req, res) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        //To do
-        // const filterLogs = await user.workLogs?.filter((record) => {
-        //     const recordDate = new Date(record.date);
-        //     recordDate.setHours(0, 0, 0, 0);
-        //     return recordDate.getTime() === today.getTime();
-        // })
+        const filterLogs = await user.workLogs?.filter((record) => {
+            const recordDate = new Date(record.date);
+            recordDate.setHours(0, 0, 0, 0);
+            return recordDate.getTime() === today.getTime();
+        })
 
-        // let lastRecord = filterLogs[user.workLogs.length - 1];
-        // let lastSecondRecord = filterLogs[user.workLogs.length - 2];
-        let lastRecord = await user.workLogs[user.workLogs.length - 1];
-        let lastSecondRecord = await user.workLogs[user.workLogs.length - 2];
+        let lastRecord = filterLogs[filterLogs.length - 1];
+        let lastSecondRecord = filterLogs[filterLogs.length - 2];
 
         const lastLoggedIn = lastRecord.loginTime;
 

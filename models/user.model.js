@@ -92,11 +92,13 @@ UserSchema.methods.checkWorkingHours = async function () {
     yesterday.setDate(today.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0);
 
-    const yesterdaysRecord = await this.workLogs?.find(record => {
+    const yesterdaysRecords = await this.workLogs?.filter(record => {
         const recordDate = new Date(record.date);
         recordDate.setHours(0, 0, 0, 0);
         return recordDate.getTime() === yesterday.getTime();
     });
+
+    const yesterdaysRecord = yesterdaysRecords[yesterdaysRecords.length - 1]
 
     if (this.role !== 'admin') {
         if (yesterdaysRecord && yesterdaysRecord.workingHours < 6) {
