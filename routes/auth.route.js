@@ -1,14 +1,15 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../middlewares/auth.middleware');
-const formMiddleware = require('../middlewares/form.middleware');
-const authController = require('../controllers/auth.controller');
+const authMiddleware = require("../middlewares/auth.middleware");
+const formMiddleware = require("../middlewares/form.middleware");
+const authController = require("../controllers/auth.controller");
 
 // @route   POST api/users/register
 // @desc    Register a user
 // @access  Public
 
-router.post("/register", formMiddleware, authController.register);
+// router.post("/register", formMiddleware, authController.register);
+router.post("/register", authController.register);
 
 // @route   POST api/users/login
 // @desc    Login a user
